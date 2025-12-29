@@ -74,10 +74,15 @@ Route::middleware(['auth'])->group(function () {
 
 // --- 3. DEVELOPMENT ONLY ---
 Route::get('/bypass-login', function () {
-    $user = User::firstOrCreate(
+    $user = \App\Models\User::firstOrCreate(
         ['email' => 'bayusamudera@test.com'], 
-        ['name' => 'Bayu Samudera', 'password' => bcrypt('12345678')]
+        [
+            'name' => 'Bayu Samudera', 
+            'password' => bcrypt('12345678'),
+            'google_id' => 'dummy_google_id_12345' 
+        ]
     );
+
     Auth::login($user);
     return redirect()->route('lost-items.index');
 });
