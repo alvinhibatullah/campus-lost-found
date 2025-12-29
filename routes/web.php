@@ -81,6 +81,3 @@ Route::get('/bypass-login', function () {
     Auth::login($user);
     return redirect()->route('lost-items.index');
 });
-
-Route::resource('found-items', FoundItemController::class);
-
