@@ -60,7 +60,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [ClaimVerificationController::class, 'queue'])->name('admin.claims.queue');
         Route::post('/{claim}/verify', [ClaimVerificationController::class, 'verify'])->name('admin.claims.verify');
     });
-
+    
     // Logout
     Route::post('/logout', function () {
         Auth::logout();
