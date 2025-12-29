@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\LostItemController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -17,6 +17,10 @@ use App\Http\Controllers\ReportController;
 // --- 1. PUBLIC ROUTES ---
 Route::get('/', function () {
     return view('welcome');
+    
+});
+Route::middleware(['auth'])->group(function () {
+Route::resource('lost-items', LostItemController::class);
 });
 
 // Login Google (Alvin)
