@@ -1,5 +1,4 @@
 <?php
-use App\Http\Controllers\LostItemController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -82,3 +81,6 @@ Route::get('/bypass-login', function () {
     Auth::login($user);
     return redirect()->route('lost-items.index');
 });
+
+Route::resource('found-items', FoundItemController::class);
+
