@@ -1,5 +1,4 @@
 <?php
-use App\Http\Controllers\LostItemController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -13,7 +12,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\ClaimVerificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
-
+    
 // --- 1. PUBLIC ROUTES ---
 Route::get('/', function () {
     return view('welcome');
