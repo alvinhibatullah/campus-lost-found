@@ -22,7 +22,7 @@ Aplikasi ini dibangun dengan **Laravel** dan mengusung antarmuka modern **Glassm
 
 ---
 
-## 🛠️ Teknologi yang Digunakan
+## Teknologi yang Digunakan
 
 * **Backend:** [Laravel 10/11](https://laravel.com) (PHP)
 * **Database:** MySQL
