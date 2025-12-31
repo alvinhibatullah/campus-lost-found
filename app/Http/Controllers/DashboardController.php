@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         /* =======================
-         *  SUMMARY STATISTICS
+         * SUMMARY STATISTICS
          * ======================= */
         $totalLost = DB::table('lost_items')->count();
         $totalFound = DB::table('found_items')->count();
@@ -24,34 +25,37 @@ class DashboardController extends Controller
             : 0;
 
         /* =======================
-         *  LOST LOCATIONS (TOP 5)
+         * TOP KATEGORI (FIXED COLUMN NAME)
          * ======================= */
         $locations = DB::table('lost_items')
-            ->select('location', DB::raw('COUNT(*) as total'))
-            ->groupBy('location')
+            // PERBAIKAN DISINI: Ganti 'kategori_id' jadi 'category_id'
+            ->join('categories', 'lost_items.category_id', '=', 'categories.id') 
+            ->select('categories.nama as location', DB::raw('COUNT(*) as total'))
+            ->groupBy('categories.nama')
             ->orderByDesc('total')
             ->limit(5)
             ->get();
 
         /* =======================
-         *  RECENT REPORTS
+         * RECENT REPORTS
          * ======================= */
-        $reports = DB::table('reports')
-            ->select('title as type', 'status', 'created_at')
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get()
-            ->map(function ($item) {
-                return (object)[
-                    'type'   => $item->type,
-                    'period' => date('M Y', strtotime($item->created_at)),
-                    'status' => ucfirst(strtolower($item->status))
-                ];
-            });
+        try {
+            $reports = DB::table('reports')
+                ->select('title as type', 'status', 'created_at')
+                ->orderByDesc('created_at')
+                ->limit(5)
+                ->get()
+                ->map(function ($item) {
+                    return (object)[
+                        'type'   => $item->type,
+                        'period' => date('M Y', strtotime($item->created_at)),
+                        'status' => ucfirst(strtolower($item->status))
+                    ];
+                });
+        } catch (\Exception $e) {
+            $reports = collect([]); 
+        }
 
-        /* =======================
-         *  RETURN VIEW
-         * ======================= */
         return view('dashboard.index', compact(
             'totalLost',
             'totalFound',

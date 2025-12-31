@@ -16,7 +16,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password')->nullable(); // Nullable agar bisa login Google tanpa password
+            $table->string('google_id')->nullable(); // Tambahan untuk Login Google
+            $table->string('avatar')->nullable();    // Tambahan untuk Foto Profil
             $table->rememberToken();
             $table->timestamps();
         });

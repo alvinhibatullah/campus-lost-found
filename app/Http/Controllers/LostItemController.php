@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\LostItem;
+use App\Models\User;      
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;      
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;       
 
 class LostItemController extends Controller
 {
@@ -16,8 +19,25 @@ class LostItemController extends Controller
                         ->with('category')
                         ->latest()
                         ->get();
+
+        $usersData = User::select(DB::raw("COUNT(*) as count"), DB::raw("DATE(created_at) as date"))
+            ->where('created_at', '>=', Carbon::now()->subDays(7))
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
+        $labels = [];
+        $chartData = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->format('Y-m-d'); 
+            $labels[] = Carbon::now()->subDays($i)->format('d M'); 
+            
+            $found = $usersData->firstWhere('date', $date);
+            $chartData[] = $found ? $found->count : 0;
+        }
                         
-        return view('lost_items.index', compact('items'));
+        return view('lost_items.index', compact('items', 'labels', 'chartData'));
     }
 
     public function create()

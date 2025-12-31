@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -16,20 +17,21 @@ use App\Http\Controllers\ReportController;
 // --- 1. PUBLIC ROUTES ---
 Route::get('/', function () {
     return view('welcome');
-    
-});
-Route::middleware(['auth'])->group(function () {
-Route::resource('lost-items', LostItemController::class);
-});
+})->name('login');
 
 // Login Google (Alvin)
 Route::get('login/google', [LoginController::class, 'redirectToGoogle']);
 Route::get('login/google/callback', [LoginController::class, 'handleGoogleCallback']);
 
 
-// --- 2. PROTECTED ROUTES ---
+// --- 2. PROTECTED ROUTES (Harus Login Dulu) ---
 Route::middleware(['auth'])->group(function () {
     
+    // === MENU UTAMA (Navigasi) ===
+    Route::get('/menu', function () {
+        return view('menu');
+    })->name('main.menu');
+
     // Fitur Profil & Dashboard (Alvin)
     Route::get('/home', [UserController::class, 'dashboard'])->name('home');
     Route::get('/profile', [UserController::class, 'showProfile'])->name('profile.show');
@@ -37,7 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/deactivate', [UserController::class, 'deactivateAccount'])->name('profile.deactivate');
 
-    // Fitur Fadhlan
+    // Fitur Fadhlan (Dashboard Statistik & Laporan)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/create', [ReportController::class, 'create'])->name('reports.create');
@@ -79,10 +81,13 @@ Route::get('/bypass-login', function () {
         [
             'name' => 'Bayu Samudera', 
             'password' => bcrypt('12345678'),
-            'google_id' => 'dummy_google_id_12345' 
+            'google_id' => 'dummy_google_id_12345',
+            'email_verified_at' => now()
         ]
     );
 
     Auth::login($user);
-    return redirect()->route('lost-items.index');
+    
+    // Arahkan ke Menu Utama, bukan langsung ke Lost Items
+    return redirect()->route('main.menu');
 });
