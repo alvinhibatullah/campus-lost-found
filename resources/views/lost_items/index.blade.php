@@ -83,9 +83,15 @@
 
 <div class="container-fluid px-4 py-4">
 
-    <div class="mb-4">
-        <h2 class="fw-bold mb-0 text-white">Dashboard</h2>
-        <p class="text-white-50 m-0">Kelola laporanmu.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-white">Dashboard</h2>
+            <p class="text-white-50 m-0">Kelola laporanmu.</p>
+        </div>
+        
+        <a href="{{ route('main.menu') }}" class="btn btn-outline-light rounded-pill px-4">
+            <i class="fas fa-arrow-left me-2"></i> Kembali ke Menu
+        </a>
     </div>
 
     @if(session('success'))

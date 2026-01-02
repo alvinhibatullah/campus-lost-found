@@ -103,7 +103,7 @@
             
             <div class="d-flex align-items-center gap-2">
                 <a href="{{ route('main.menu') }}" class="btn-logout btn-sm d-flex align-items-center">
-                    <i class="bi bi-arrow-left me-1"></i> Kembali
+                    <i class="bi bi-arrow-left me-1"></i> Kembali ke Menu
                 </a>
 
                 <form method="POST" action="{{ route('logout') }}">
