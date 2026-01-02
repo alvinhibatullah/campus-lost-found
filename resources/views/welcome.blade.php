@@ -165,7 +165,7 @@
             </div>
 
             <a href="{{ url('login/google') }}" class="btn btn-google w-100 mb-4">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" width="20">
+                <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="G" width="20">
                 Masuk dengan Google
             </a>
 
