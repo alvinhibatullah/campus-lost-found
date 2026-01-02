@@ -183,7 +183,7 @@
         </div>
 
         <div class="text-center mt-5 text-white-50 small">
-            &copy; {{ date('Y') }} KELOMPOK 3 WAD
+            &copy; {{ date('Y') }} KELOMPOK 4 WAD Campus Lost & Found. All rights reserved.
         </div>
 
     </div>
