@@ -17,7 +17,7 @@ class LoginController extends Controller
 
     public function handleGoogleCallback()
     {
-        $googleUser = Socialite::driver('google')->user();
+        $googleUser = Socialite::driver('google')->stateless()->user();
 
         $user = User::firstOrCreate(
             ['google_id' => $googleUser->getId()],
@@ -28,9 +28,7 @@ class LoginController extends Controller
                 'password' => bcrypt(Str::random(16)),
             ]
         );
-
         Auth::login($user, true);
-
-        return redirect('/home');
+        return redirect('/menu');
     }
 }

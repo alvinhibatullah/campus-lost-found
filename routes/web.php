@@ -33,7 +33,12 @@ Route::middleware(['auth'])->group(function () {
     })->name('main.menu');
 
     // Fitur Profil & Dashboard (Alvin)
-    Route::get('/home', [UserController::class, 'dashboard'])->name('home');
+    // PERBAIKAN: Langsung ke view('home') biar UI Glass-nya muncul. 
+    // Kalau pakai [UserController::class, 'dashboard'], dia malah manggil file lama yang putih polos.
+    Route::get('/home', function () {
+        return view('home');
+    })->name('home');
+    
     Route::get('/profile', [UserController::class, 'showProfile'])->name('profile.show');
     Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
     Route::post('/profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
@@ -88,6 +93,6 @@ Route::get('/bypass-login', function () {
 
     Auth::login($user);
     
-    // Arahkan ke Menu Utama, bukan langsung ke Lost Items
-    return redirect()->route('main.menu');
+    // Arahkan ke Home yang baru
+    return redirect()->route('home');
 });

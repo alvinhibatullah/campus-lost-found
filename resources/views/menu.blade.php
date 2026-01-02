@@ -171,7 +171,7 @@
             </div>
 
             <div class="col-md-4 col-lg-3">
-                <a href="{{ route('profile.show') }}" class="glass-menu menu-profile">
+                <a href="{{ route('home') }}" class="glass-menu menu-profile">
                     <div class="icon-wrapper">
                         <i class="fas fa-user-astronaut"></i>
                     </div>

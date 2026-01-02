@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Lost Items')
+
 @push('styles')
 <style>
     /* 1. BACKGROUND & GLOBAL */
@@ -80,16 +81,11 @@
 <div class="circle-bg c1"></div>
 <div class="circle-bg c2"></div>
 
-<div class="container py-4">
+<div class="container-fluid px-4 py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold mb-0 text-white">Dashboard</h2>
-            <p class="text-white-50 m-0">Kelola laporanmu.</p>
-        </div>
-        <a href="{{ route('lost-items.create') }}" class="btn btn-primary rounded-pill px-4 shadow fw-bold" style="background: #00d2ff; border: none; color: #0f2027;">
-            <i class="fas fa-plus me-2"></i> Lapor Baru
-        </a>
+    <div class="mb-4">
+        <h2 class="fw-bold mb-0 text-white">Dashboard</h2>
+        <p class="text-white-50 m-0">Kelola laporanmu.</p>
     </div>
 
     @if(session('success'))
@@ -100,8 +96,17 @@
     </div>
     @endif
 
-    <div class="row g-4 align-items-start"> <div class="col-md-8">
-            <h5 class="fw-bold mb-3 text-white"><i class="fas fa-history me-2 text-warning"></i>Riwayat Laporan</h5>
+    <div class="row g-4 align-items-start"> 
+        
+        <div class="col-md-8">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-white"><i class="fas fa-history me-2 text-warning"></i>Riwayat Laporan</h5>
+                
+                <a href="{{ route('lost-items.create') }}" class="btn btn-primary rounded-pill px-4 shadow fw-bold" style="background: #00d2ff; border: none; color: #0f2027;">
+                    <i class="fas fa-plus me-2"></i> Lapor Baru
+                </a>
+            </div>
             
             <div class="glass-section px-3 py-3">
                 @if($items->count() > 0)
