@@ -67,9 +67,9 @@
 
         .btn-logout {
             border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 5px; padding: 5px 15px;
-            background: transparent; transition: 0.3s;
+            background: transparent; transition: 0.3s; text-decoration: none;
         }
-        .btn-logout:hover { background: rgba(255,255,255,0.1); border-color: white; }
+        .btn-logout:hover { background: rgba(255,255,255,0.1); border-color: white; color: white; }
 
         /* 6. BACKGROUND BLOBS (HIASAN) */
         .circle-bg {
@@ -100,11 +100,18 @@
                 <h2 class="mb-0 fw-bold">User Control Dashboard</h2>
                 <p class="text-mute-custom small">Campus Lost & Found</p>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn-logout btn-sm">Logout</button>
-            </form>
-        </div>
+            
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('main.menu') }}" class="btn-logout btn-sm d-flex align-items-center">
+                    <i class="bi bi-arrow-left me-1"></i> Kembali
+                </a>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="btn-logout btn-sm">Logout</button>
+                </form>
+            </div>
+            </div>
 
         <div class="row">
             <div class="col-md-4">
