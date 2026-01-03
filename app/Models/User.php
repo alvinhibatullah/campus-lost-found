@@ -15,6 +15,10 @@ class User extends Authenticatable
         'email',
         'avatar',
         'password',
+        'nim',
+        'fakultas',
+        'jurusan',
+        'angkatan',
     ];
 
 

@@ -34,10 +34,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Fitur Profil & Dashboard (Alvin)
     // PERBAIKAN: Langsung ke view('home') biar UI Glass-nya muncul. 
-    // Kalau pakai [UserController::class, 'dashboard'], dia malah manggil file lama yang putih polos.
-    Route::get('/home', function () {
-        return view('home');
-    })->name('home');
+    // Sekarang mengarah ke [UserController::class, 'home'] agar Log Aktivitas bisa muncul
+    Route::get('/home', [UserController::class, 'home'])->name('home');
     
     Route::get('/profile', [UserController::class, 'showProfile'])->name('profile.show');
     Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');

@@ -19,6 +19,7 @@
             body, .page { margin: 0; box-shadow: none; background: white; }
             .no-print { display: none !important; }
         }
+        
     </style>
 </head>
 <body>

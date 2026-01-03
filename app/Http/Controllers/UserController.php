@@ -4,27 +4,34 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ActivityLogProfile; // <--- 1. PENTING: Panggil Model Log
 
 class UserController extends Controller
 {
     /**
-     * Dashboard User Control
-     * (Tahap 40%: tampilkan info user + shortcut menu)
+     * Dashboard User Control (Menu Awal)
+     * Menampilkan profil singkat + shortcut + log aktivitas
      */
-    public function dashboard()
+    public function home()
     {
         $user = Auth::user();
 
-        return view('dashboard', compact('user'));
+        // Ambil 5 aktivitas terakhir milik user ini, urutkan dari yang terbaru
+        $logs = ActivityLogProfile::where('user_id', $user->id)
+                                  ->latest()
+                                  ->take(5)
+                                  ->get();
+
+        // Kirim data user & logs ke view 'home'
+        return view('home', compact('user', 'logs'));
     }
 
     /**
-     * Read Profil (lihat data user)
+     * Read Profil (lihat data user detail)
      */
     public function showProfile()
     {
         $user = Auth::user();
-
         return view('profile', compact('user'));
     }
 
@@ -34,7 +41,6 @@ class UserController extends Controller
     public function editProfile()
     {
         $user = Auth::user();
-
         return view('edit-profile', compact('user'));
     }
 
@@ -43,20 +49,34 @@ class UserController extends Controller
      */
     public function updateProfile(Request $request)
     {
+        // Validasi
         $request->validate([
-            'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
+            'name'      => 'required|string|max:255',
+            'nim'       => 'nullable|string|max:20',
+            'fakultas'  => 'nullable|string|max:100',
+            'jurusan'   => 'nullable|string|max:100',
+            'angkatan'  => 'nullable|numeric',
         ]);
 
         $user = Auth::user();
-        $user->update($request->only('name', 'email'));
+        
+        // Simpan data profil
+        $user->update($request->only('name', 'nim', 'fakultas', 'jurusan', 'angkatan'));
 
-        return redirect()->route('profile.show')->with('success', 'Profil berhasil diperbarui.');
+        // --- 2. PENTING: Catat Log Aktivitas ---
+        ActivityLogProfile::create([
+            'user_id'     => $user->id,
+            'action'      => 'Update Profil',
+            'description' => 'Anda telah memperbarui data profil.',
+        ]);
+        // ---------------------------------------
+
+        // Arahkan kembali ke Menu Awal (home)
+        return redirect()->route('home')->with('success', 'Profil berhasil diperbarui.');
     }
 
     /**
      * Deaktivasi Akun (CRUD: Delete)
-     * Catatan: ini hard delete. Kalau mau soft delete, bilang—nanti saya ubah.
      */
     public function deactivateAccount(Request $request)
     {
