@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Fitur Bayu (Lost Items)
     Route::resource('lost-items', LostItemController::class);
+    Route::get('/lost-items/{id}/print', [LostItemController::class, 'print'])->name('lost-items.print');
 
     // Fitur Arenko (Found Items)
     Route::resource('found-items', FoundItemController::class);

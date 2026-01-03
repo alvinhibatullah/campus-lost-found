@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\LostItem;
-use App\Models\User;      
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;      
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;       
+use Carbon\Carbon;
 
 class LostItemController extends Controller
 {
@@ -54,28 +54,26 @@ class LostItemController extends Controller
             'tanggal_hilang' => 'required|date',
             'deskripsi' => 'required|string',
             'koordinat_lokasi' => 'required',
-            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', 
+            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg|max:10240', 
         ]);
 
         $pathFoto = null;
         if ($request->hasFile('foto_barang')) {
             $pathFoto = $request->file('foto_barang')->store('lost_items', 'public');
         }
-        try {
-            LostItem::create([
-                'user_id' => Auth::id(), 
-                'category_id' => $request->kategori_id,
-                'nama_barang' => $request->nama_barang,
-                'deskripsi' => $request->deskripsi,
-                'tanggal_hilang' => $request->tanggal_hilang,
-                'koordinat_lokasi' => $request->koordinat_lokasi,
-                'foto_barang' => $pathFoto,
-                'status' => 'Searching',
-            ]);
-        } catch (\Exception $e) {
-            dd("GAGAL MENYIMPAN KE DATABASE: ", $e->getMessage());
-        }
 
+        LostItem::create([
+            'user_id' => Auth::id(), 
+            'category_id' => $request->kategori_id,
+            'nama_barang' => $request->nama_barang,
+            'deskripsi' => $request->deskripsi,
+            'tanggal_hilang' => $request->tanggal_hilang,
+            'koordinat_lokasi' => $request->koordinat_lokasi,
+            'foto_barang' => $pathFoto,
+            'status' => 'Searching',
+        ]);
+
+        // Route tetap pakai dash 'lost-items' karena di web.php pakai resource 'lost-items'
         return redirect()->route('lost-items.index')->with('success', 'Laporan kehilangan berhasil dibuat!');
     }
 
@@ -84,6 +82,7 @@ class LostItemController extends Controller
         $item = LostItem::where('user_id', Auth::id())->findOrFail($id);
         $categories = Category::all();
         
+        // PERBAIKAN: Menggunakan 'lost_items' (underscore)
         return view('lost_items.edit', compact('item', 'categories'));
     }
 
@@ -131,5 +130,14 @@ class LostItemController extends Controller
         $item->delete();
 
         return redirect()->route('lost-items.index')->with('success', 'Laporan berhasil dihapus.');
+    }
+
+    public function print($id)
+    {
+        $item = LostItem::where('user_id', Auth::id())
+                        ->with('category')
+                        ->findOrFail($id);
+        
+        return view('lost_items.print', compact('item'));
     }
 }

@@ -3,7 +3,7 @@
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-    /* Styling Global sama dengan Index */
+    /* Styling Global */
     body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important; min-height: 100vh; color: white; }
     .circle-bg { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; animation: float 8s ease-in-out infinite; }
     .c1 { width: 500px; height: 500px; top: -100px; left: -100px; background: #4facfe; opacity: 0.4; }
@@ -19,20 +19,42 @@
         box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         padding: 30px;
     }
+    
+    /* Input & Select Style */
     .form-control, .form-select {
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
+        color: white !important;
         border-radius: 12px;
         padding: 12px;
     }
+
+    /* Placeholder Color Fix */
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+        opacity: 1;
+    }
+    
+    .form-control:read-only {
+        background: rgba(0, 0, 0, 0.5);
+        color: #00d2ff !important;
+    }
+
     .form-control:focus, .form-select:focus {
         background: rgba(0, 0, 0, 0.5);
         border-color: #00d2ff;
         box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
         color: white;
     }
-    option { background: #1a2a33; color: white; }
+    
+    /* --- PERBAIKAN WARNA DROPDOWN DI SINI --- */
+    /* Ini memaksa background pilihan menjadi gelap pekat */
+    .form-select option {
+        background-color: #0f2027; /* Warna Hitam/Biru Gelap */
+        color: white;
+        padding: 10px;
+    }
+    
     #map { height: 350px; border-radius: 15px; border: 2px solid rgba(255,255,255,0.2); }
 </style>
 @endpush
@@ -52,22 +74,37 @@
             <p class="text-white-50 mb-4">Isi form di bawah untuk melaporkan barang hilang.</p>
         </div>
 
-        <div class="col-lg-8">
+       <div class="col-lg-8">
+            
+            @if ($errors->any())
+                <div class="alert alert-danger border-0 text-white mb-4" style="background: rgba(220, 53, 69, 0.4);">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <form action="{{ route('lost-items.store') }}" method="POST" enctype="multipart/form-data" class="glass-form">
                 @csrf
                 <div class="row g-3">
                     <div class="col-12">
                         <label class="small text-uppercase text-white-50 fw-bold ls-1 mb-2">Nama Barang</label>
-                        <input type="text" name="nama_barang" class="form-control" placeholder="Contoh: Dompet Kulit Hitam" required>
+                        <input type="text" name="nama_barang" class="form-control" placeholder="Contoh: Jam Tangan Casio" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="small text-uppercase text-white-50 fw-bold ls-1 mb-2">Kategori</label>
                         <select name="kategori_id" class="form-select" required>
-                            <option value="">Pilih...</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->nama }}</option>
-                            @endforeach
+                            <option value="" class="text-white-50">Pilih Kategori...</option>
+                            
+                            @if(isset($categories) && count($categories) > 0)
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->nama }}</option>
+                                @endforeach
+                            @else
+                                <option value="" disabled>Data Kosong</option>
+                            @endif
                         </select>
                     </div>
 
@@ -78,7 +115,7 @@
 
                     <div class="col-12">
                         <label class="small text-uppercase text-white-50 fw-bold ls-1 mb-2">Deskripsi Lengkap</label>
-                        <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan ciri-ciri, isi barang, dll..."></textarea>
+                        <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan Ciri Ciri Barang Disini..."></textarea>
                     </div>
 
                     <div class="col-12">
@@ -96,7 +133,8 @@
                 
                 <div id="map" class="flex-grow-1 mb-3"></div>
                 
-                <input type="text" name="koordinat_lokasi" id="koordinat_lokasi" class="form-control text-center font-monospace mb-3" placeholder="Klik peta..." readonly>
+                <label class="small text-white-50 mb-1">Koordinat Terpilih:</label>
+                <input type="text" name="koordinat_lokasi" id="koordinat_lokasi" class="form-control text-center font-monospace mb-3" placeholder="Klik peta untuk ambil lokasi..." readonly>
 
                 <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-lg mt-auto">
                     <i class="fas fa-paper-plane me-2"></i> Kirim Laporan

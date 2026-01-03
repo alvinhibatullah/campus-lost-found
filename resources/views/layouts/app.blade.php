@@ -26,7 +26,8 @@
 <body>
     
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 shadow-sm">
-        <div class="container-fluid px-4"> <a class="navbar-brand fw-bold" href="{{ url('/menu') }}">
+        <div class="container-fluid px-4"> 
+            <a class="navbar-brand fw-bold" href="{{ url('/menu') }}">
                 <i class="fas fa-search-location me-2"></i>Campus Lost & Found
             </a>
             
@@ -62,17 +63,12 @@
         </div>
     </nav>
 
-    <div class="container-fluid px-4"> @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
+    <div class="container-fluid px-4"> 
         @yield('content')
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> @stack('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    @stack('scripts')
 </body>
 </html>

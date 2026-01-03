@@ -67,13 +67,6 @@
     
     .link-map { background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; color: #00d2ff; text-decoration: none; font-size: 0.8rem; }
     .link-map:hover { background: #00d2ff; color: white; }
-
-    /* Sticky Sidebar Biar Keren */
-    .sticky-sidebar {
-        position: sticky;
-        top: 20px; /* Jarak dari atas pas di-scroll */
-        z-index: 100;
-    }
 </style>
 @endpush
 
@@ -104,7 +97,7 @@
 
     <div class="row g-4 align-items-start"> 
         
-        <div class="col-md-8">
+        <div class="col-12">
             
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0 text-white"><i class="fas fa-history me-2 text-warning"></i>Riwayat Laporan</h5>
@@ -145,26 +138,32 @@
                             </td>
                             <td>
                                 <a href="https://www.google.com/maps/search/?api=1&query={{ $item->koordinat_lokasi }}" target="_blank" class="link-map">
-                                    <i class="fas fa-map-marker-alt"></i> Peta
+                                    <i class="fas fa-map-marker-alt"></i> Maps
                                 </a>
                             </td>
                             <td>
                                 @if($item->status == 'Searching')
-                                    <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.7rem;">Cari</span>
+                                    <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.7rem;">Searching</span>
                                 @elseif($item->status == 'Found')
-                                    <span class="badge bg-success rounded-pill" style="font-size: 0.7rem;">Ketemu</span>
+                                    <span class="badge bg-success rounded-pill" style="font-size: 0.7rem;">Found</span>
                                 @else
-                                    <span class="badge bg-secondary rounded-pill" style="font-size: 0.7rem;">Tutup</span>
+                                    <span class="badge bg-secondary rounded-pill" style="font-size: 0.7rem;">Closed</span>
                                 @endif
                             </td>
                             <td class="text-end">
-                                <div class="d-flex justify-content-end">
-                                    <a href="{{ route('lost-items.edit', $item->id) }}" class="btn-action btn-edit">
+                                <div class="d-flex justify-content-end gap-1">
+                                    
+                                    <a href="{{ route('lost-items.print', $item->id) }}" target="_blank" class="btn-action" style="background: rgba(255, 255, 255, 0.1); color: white;" title="Print / PDF">
+                                        <i class="fas fa-file-pdf fa-xs"></i>
+                                    </a>
+
+                                    <a href="{{ route('lost-items.edit', $item->id) }}" class="btn-action btn-edit" title="Edit">
                                         <i class="fas fa-pencil-alt fa-xs"></i>
                                     </a>
+
                                     <form action="{{ route('lost-items.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus?');">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn-action btn-delete">
+                                        <button type="submit" class="btn-action btn-delete" title="Hapus">
                                             <i class="fas fa-trash fa-xs"></i>
                                         </button>
                                     </form>
@@ -182,57 +181,6 @@
                 @endif
             </div>
         </div>
-
-        <div class="col-md-4 sticky-sidebar">
-            <h5 class="fw-bold mb-3 text-white"><i class="fas fa-chart-pie me-2 text-info"></i>Statistik</h5>
-            
-            <div class="glass-section">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="small fw-bold text-info">USER BARU</span>
-                    <span class="badge border border-white border-opacity-25 text-white-50 small">7 Hari</span>
-                </div>
-                
-                <div style="height: 200px; width: 100%;">
-                    <canvas id="userChart"></canvas>
-                </div>
-                
-                <hr class="border-secondary border-opacity-50 my-3">
-                
-                <div class="text-center">
-                    <small class="text-white-50 d-block mb-0 text-uppercase fw-bold" style="font-size: 0.7rem;">Laporan Aktif</small>
-                    <h1 class="fw-bold text-warning mb-0">{{ $items->where('status', 'Searching')->count() }}</h1>
-                    <small class="text-white-50" style="font-size: 0.7rem;">Sedang Dicari</small>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
-    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
-    const ctx = document.getElementById('userChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: @json($labels),
-            datasets: [{
-                label: 'User',
-                data: @json($chartData),
-                backgroundColor: '#00d2ff', borderRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { display: false }, ticks: { display: false } },
-                x: { grid: { display: false }, ticks: { font: { size: 9 } } }
-            }
-        }
-    });
-</script>
 @endsection
