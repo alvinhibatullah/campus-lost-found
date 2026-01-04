@@ -49,11 +49,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/reports/{id}', [ReportController::class, 'destroy'])->name('reports.destroy');
     Route::get('/reports/{id}/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
     Route::get('/reports/{id}/print', [ReportController::class, 'print'])->name('reports.print');
-    Route::get('/reports/{id}/pdf', [ReportController::class, 'exportPdf'])
-        ->name('reports.export.pdf');
+    Route::get('/reports/{id}/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
 
-    Route::get('/reports/{id}/print', [ReportController::class, 'print'])
-        ->name('reports.print');
+    Route::get('/reports/{id}/print', [ReportController::class, 'print'])->name('reports.print');
 
 
 
