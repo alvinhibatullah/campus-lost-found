@@ -161,7 +161,7 @@
             </div>
 
             <div class="col-md-4 col-lg-3">
-                <a href="{{ route('reports') }}" class="glass-menu menu-stats">
+                <a href="{{ route('reports.index') }}" class="glass-menu menu-stats">
                     <div class="icon-wrapper">
                         <i class="fas fa-chart-pie"></i>
                     </div>
