@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/lost-items/{id}/print', [LostItemController::class, 'print'])->name('lost-items.print');
 
     // Fitur Arenko (Found Items)
+    Route::get('/found-items/{id}/result', [FoundItemController::class, 'result'])->name('found-items.result');
     Route::resource('found-items', FoundItemController::class);
 
     // Fitur Dawai (Claims)

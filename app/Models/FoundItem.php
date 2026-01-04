@@ -16,7 +16,8 @@ class FoundItem extends Model
         'tanggal_ditemukan',
         'deskripsi',
         'foto_barang',
-        'status'
+        'status',
+        'koordinat_lokasi',
     ];
 
     public function user()

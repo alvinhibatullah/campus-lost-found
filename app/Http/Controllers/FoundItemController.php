@@ -31,6 +31,7 @@ class FoundItemController extends Controller
             'tanggal_ditemukan' => 'required|date',
             'deskripsi' => 'required|string',
             'foto_barang' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'koordinat_lokasi' => 'required|string', 
         ]);
 
         $pathFoto = null;
@@ -45,11 +46,18 @@ class FoundItemController extends Controller
             'tanggal_ditemukan' => $request->tanggal_ditemukan,
             'deskripsi' => $request->deskripsi,
             'foto_barang' => $pathFoto,
+            'koordinat_lokasi' => $request->koordinat_lokasi,
             'status' => 'Unclaimed'
         ]);
 
         return redirect()->route('found-items.index')
             ->with('success', 'Barang temuan berhasil dilaporkan!');
+    }
+
+    public function result($id)
+    {
+        $item = FoundItem::where('user_id', Auth::id())->findOrFail($id);
+        return view('found_items.result', compact('item'));
     }
 
     public function edit($id)
@@ -87,20 +95,18 @@ class FoundItemController extends Controller
         ]);
 
         return redirect()->route('found-items.index')
-            ->with('success', 'Data barang temuan berhasil diperbarui!');
+            ->with('success', 'Data berhasil diperbarui!');
     }
 
     public function destroy($id)
     {
         $item = FoundItem::where('user_id', Auth::id())->findOrFail($id);
-
         if ($item->foto_barang) {
             Storage::disk('public')->delete($item->foto_barang);
         }
-
         $item->delete();
 
         return redirect()->route('found-items.index')
-            ->with('success', 'Data barang temuan berhasil dihapus!');
+            ->with('success', 'Data berhasil dihapus!');
     }
 }
