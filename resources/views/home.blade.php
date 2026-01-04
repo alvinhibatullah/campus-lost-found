@@ -35,7 +35,7 @@
         .text-mute-custom { color: rgba(255, 255, 255, 0.6); }
         h5 { font-weight: 600; margin-bottom: 20px; }
 
-        /* 4. AVATAR */
+        /* 4. AVATAR (DIPERBARUI) */
         .avatar-circle {
             width: 70px; height: 70px;
             background: rgba(0, 210, 255, 0.1);
@@ -46,6 +46,7 @@
             font-size: 1.8rem;
             font-weight: bold;
             flex-shrink: 0;
+            overflow: hidden; /* PENTING: Agar gambar terpotong bulat */
         }
 
         /* 5. BUTTONS */
@@ -103,7 +104,11 @@
                     
                     <div class="d-flex align-items-start mb-4">
                         <div class="avatar-circle me-3">
-                            {{ substr(Auth::user()->name, 0, 1) }}
+                            @if(Auth::user()->avatar)
+                                <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            @else
+                                {{ substr(Auth::user()->name, 0, 1) }}
+                            @endif
                         </div>
                         <div class="w-100">
                             <div class="fw-bold fs-5 text-truncate" style="max-width: 200px;" title="{{ Auth::user()->name }}">
