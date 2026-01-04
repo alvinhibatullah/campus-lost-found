@@ -43,11 +43,20 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/deactivate', [UserController::class, 'deactivateAccount'])->name('profile.deactivate');
 
     // Fitur Fadhlan (Dashboard Statistik & Laporan)
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/create', [ReportController::class, 'create'])->name('reports.create');
     Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
     Route::delete('/reports/{id}', [ReportController::class, 'destroy'])->name('reports.destroy');
+    Route::get('/reports/{id}/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
+    Route::get('/reports/{id}/print', [ReportController::class, 'print'])->name('reports.print');
+    Route::get('/reports/{id}/pdf', [ReportController::class, 'exportPdf'])
+        ->name('reports.export.pdf');
+
+    Route::get('/reports/{id}/print', [ReportController::class, 'print'])
+        ->name('reports.print');
+
+
+
 
     // Fitur Bayu (Lost Items)
     Route::resource('lost-items', LostItemController::class);
