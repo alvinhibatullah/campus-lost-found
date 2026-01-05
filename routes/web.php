@@ -52,10 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reports/{id}/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
 
     Route::get('/reports/{id}/print', [ReportController::class, 'print'])->name('reports.print');
-
-
-
-
+    
     // Fitur Bayu (Lost Items)
     Route::resource('lost-items', LostItemController::class);
     Route::get('/lost-items/{id}/print', [LostItemController::class, 'print'])->name('lost-items.print');
@@ -66,16 +63,21 @@ Route::middleware(['auth'])->group(function () {
 
     // Fitur Dawai (Claims)
     Route::prefix('claims')->group(function () {
+        // Halaman Menu Klaim (Card Pilihan)
+        // Pastikan kamu punya file resources/views/claims/menu.blade.php
+        Route::get('/menu', function() {
+            return view('claims.menu'); 
+        })->name('claims.menu');
+
+        // CRUD Klaim
         Route::get('/', [ClaimController::class, 'index'])->name('claims.index');
         Route::get('/create', [ClaimController::class, 'create'])->name('claims.create');
         Route::post('/', [ClaimController::class, 'store'])->name('claims.store');
         Route::get('/{claim}', [ClaimController::class, 'show'])->name('claims.show');
-    });
-
-    // Fitur Admin Verification (Dawai)
-    Route::prefix('admin/claims')->group(function () {
-        Route::get('/', [ClaimVerificationController::class, 'queue'])->name('admin.claims.queue');
-        Route::post('/{claim}/verify', [ClaimVerificationController::class, 'verify'])->name('admin.claims.verify');
+        
+        // Fitur Tambahan (Cancel & PDF)
+        Route::patch('/{claim}/cancel', [ClaimController::class, 'cancel'])->name('claims.cancel');
+        Route::get('/{claim}/pdf', [ClaimController::class, 'exportPdf'])->name('claims.pdf'); // Tambahan route PDF
     });
     
     // Logout

@@ -1,28 +1,57 @@
 <?php
 
+
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
-use App\Models\User;
-use App\Models\Item;
-use App\Models\ClaimDetail;
-use App\Models\ClaimAttachment;
-use App\Models\ClaimVerification;
-use App\Models\ClaimStatusHistory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Claim extends Model
 {
     protected $fillable = [
-        'user_id','item_id','claim_reason','incident_at','incident_location',
-        'status','admin_note','is_active'
+        'user_id',
+        'item_id',
+        'claim_reason',
+        'incident_at',
+        'incident_location',
+        'owner_name',
+        'nim',
+        'contact_phone',
+        'ownership_proof',
+        'attachments',
+        'status',
+        'is_active',
     ];
 
-    public function user() { return $this->belongsTo(User::class); }
-    public function item() { return $this->belongsTo(Item::class); }
+    protected $casts = [
+        'incident_at' => 'datetime',
+        'attachments' => 'array',
+        'is_active' => 'boolean',
+    ];
 
-    public function details() { return $this->hasMany(ClaimDetail::class); }
-    public function attachments() { return $this->hasMany(ClaimAttachment::class); }
-    public function verifications() { return $this->hasMany(ClaimVerification::class); }
-    public function statusHistories() { return $this->hasMany(ClaimStatusHistory::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function item(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\LostItem::class, 'item_id');
+        // ganti kalau tabel item kamu beda
+    }
+
+    // helper UI
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            'submitted' => 'Submitted',
+            'under_review' => 'Under Review',
+            'need_more_proof' => 'Need Info',
+            'approved' => 'Accepted',
+            'rejected' => 'Rejected',
+            'cancelled' => 'Cancelled',
+            default => ucfirst($this->status),
+        };
+    }
 }
