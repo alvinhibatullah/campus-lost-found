@@ -61,24 +61,30 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/found-items/{id}/result', [FoundItemController::class, 'result'])->name('found-items.result');
     Route::resource('found-items', FoundItemController::class);
 
-    // Fitur Dawai (Claims)
+    //fitur dawai (claim items)
     Route::prefix('claims')->group(function () {
-        // Halaman Menu Klaim (Card Pilihan)
-        // Pastikan kamu punya file resources/views/claims/menu.blade.php
-        Route::get('/menu', function() {
-            return view('claims.menu'); 
-        })->name('claims.menu');
+    // 1. Menu Utama & Browse
+    Route::get('/', [ClaimController::class, 'index'])->name('claims.index');
+    Route::get('/browse', [ClaimController::class, 'browse'])->name('claims.browse');
 
-        // CRUD Klaim
-        Route::get('/', [ClaimController::class, 'index'])->name('claims.index');
-        Route::get('/create', [ClaimController::class, 'create'])->name('claims.create');
-        Route::post('/', [ClaimController::class, 'store'])->name('claims.store');
-        Route::get('/{claim}', [ClaimController::class, 'show'])->name('claims.show');
-        
-        // Fitur Tambahan (Cancel & PDF)
-        Route::patch('/{claim}/cancel', [ClaimController::class, 'cancel'])->name('claims.cancel');
-        Route::get('/{claim}/pdf', [ClaimController::class, 'exportPdf'])->name('claims.pdf'); // Tambahan route PDF
-    });
+    // 2. Create (Ajukan)
+    Route::get('/{item_id}/create', [ClaimController::class, 'create'])->name('claims.create');
+    Route::post('/store', [ClaimController::class, 'store'])->name('claims.store');
+
+    // 3. Edit & Update
+    Route::get('/{id}/edit', [ClaimController::class, 'edit'])->name('claims.edit');
+    Route::put('/{id}', [ClaimController::class, 'update'])->name('claims.update');
+
+    // 4. Mark as Taken (BARU: Konfirmasi Barang Diambil)
+    Route::patch('/{id}/mark-as-taken', [ClaimController::class, 'markAsTaken'])->name('claims.mark-taken');
+
+    // 5. Read (List & Print)
+    Route::get('/my-claims', [ClaimController::class, 'myClaims'])->name('claims.my-claims');
+    Route::get('/print-pdf/{id}', [ClaimController::class, 'printPdf'])->name('claims.print');
+    
+    // 6. Delete (Batal)
+    Route::delete('/{id}/cancel', [ClaimController::class, 'destroy'])->name('claims.destroy');
+});
     
     // Logout
     Route::post('/logout', function () {

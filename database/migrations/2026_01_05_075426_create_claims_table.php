@@ -4,56 +4,33 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void
+return new class extends Migration
+{
+    public function up()
     {
+        // Kita gunakan Schema::dropIfExists dulu biar aman kalau tabel nyangkut
+        Schema::dropIfExists('claims'); 
+
         Schema::create('claims', function (Blueprint $table) {
             $table->id();
-
-            // pemilik klaim
-            $table->foreignId('user_id')
-                ->constrained()
-                ->cascadeOnDelete();
-
-            // barang yang diklaim (sesuaikan!)
-            $table->foreignId('item_id')
-                ->constrained('lost_items')
-                ->cascadeOnDelete();
-
-            // data klaim
-            $table->text('claim_reason');
-            $table->dateTime('incident_at')->nullable();
-            $table->string('incident_location')->nullable();
-
-            // bukti kepemilikan (digabung)
-            $table->string('owner_name')->nullable();
-            $table->string('nim')->nullable();
-            $table->string('contact_phone')->nullable();
-            $table->text('ownership_proof')->nullable();
-
-            // lampiran (JSON)
-            $table->json('attachments')->nullable();
-
-            // status klaim
-            $table->enum('status', [
-                'submitted',
-                'under_review',
-                'need_more_proof',
-                'approved',
-                'rejected',
-                'cancelled'
-            ])->default('submitted');
-
-            // soft cancel versi sederhana
-            $table->boolean('is_active')->default(true);
-
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            
+            // KOLOM STANDALONE (Data barang disimpan disini)
+            $table->string('item_name');       
+            $table->string('category')->nullable();
+            $table->string('location_found')->nullable();
+            $table->date('date_found')->nullable();
+            $table->text('description')->nullable();
+            
+            // STATUS
+            $table->string('status')->default('pending');
+            $table->text('claim_reason')->nullable();
+            
             $table->timestamps();
-
-            $table->index(['user_id', 'status']);
         });
     }
 
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('claims');
     }

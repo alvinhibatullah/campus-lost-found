@@ -4,53 +4,57 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Claim extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
-        'item_id',
-        'claim_reason',
-        'incident_at',
-        'incident_location',
-        'owner_name',
-        'nim',
-        'contact_phone',
-        'ownership_proof',
-        'attachments',
+        // Field barang sekarang milik Claim sepenuhnya
+        'item_name',
+        'category',
+        'location_found',
+        'date_found',
+        'description',
+        // Status
         'status',
-        'is_active',
+        'claim_reason',
+        'proof_image'
     ];
 
     protected $casts = [
-        'incident_at' => 'datetime',
-        'attachments' => 'array',
-        'is_active' => 'boolean',
+        'date_found' => 'date',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function item(): BelongsTo
+    // HAPUS function item() karena kita sudah tidak berelasi!
+
+    // Helper UI Warna Badge (Tetap sama)
+    public function statusClass(): string
     {
-        return $this->belongsTo(\App\Models\LostItem::class, 'item_id');
-        // ganti kalau tabel item kamu beda
+        return match ($this->status) {
+            'pending' => 'warning',
+            'approved' => 'success',
+            'rejected', 'cancelled' => 'danger',
+            default => 'secondary',
+        };
     }
 
-    // helper UI
+    // Helper UI Label Teks
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'submitted' => 'Submitted',
-            'under_review' => 'Under Review',
-            'need_more_proof' => 'Need Info',
-            'approved' => 'Accepted',
-            'rejected' => 'Rejected',
-            'cancelled' => 'Cancelled',
+            'pending' => 'Menunggu Verifikasi',
+            'approved' => 'Klaim Diterima',
+            'rejected' => 'Ditolak',
+            'cancelled' => 'Dibatalkan',
             default => ucfirst($this->status),
         };
     }

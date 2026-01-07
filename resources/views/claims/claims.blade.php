@@ -1,303 +1,206 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Klaim Saya - Campus Lost & Found</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+@extends('layouts.app')
+@section('title', 'Klaim Saya')
 
-    <style>
-        /* Biar mirip screenshot: badge pill + warna halus */
-        .badge-soft {
-            border: 1px solid transparent;
-            padding: .45rem .75rem;
-            border-radius: 999px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-        }
-        .dot {
-            width: .5rem;
-            height: .5rem;
-            border-radius: 999px;
-            display: inline-block;
-        }
+@push('styles')
+<style>
+    /* 1. BACKGROUND & GLOBAL */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        min-height: 100vh; color: white; overflow-x: hidden;
+    }
+    .circle-bg { position: fixed; border-radius: 50%; background: rgba(255, 255, 255, 0.1); filter: blur(80px); z-index: -1; animation: float 8s ease-in-out infinite; }
+    .c1 { width: 500px; height: 500px; top: -100px; left: -100px; background: #4facfe; opacity: 0.4; }
+    .c2 { width: 400px; height: 400px; bottom: -50px; right: -50px; background: #43e97b; opacity: 0.3; animation-delay: 2s; }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-30px); } }
 
-        .soft-submitted { background:#F1F5F9; color:#475569; border-color:#E2E8F0; }
-        .soft-review    { background:#FEF9C3; color:#92400E; border-color:#FDE68A; }
-        .soft-needinfo  { background:#E0E7FF; color:#3730A3; border-color:#C7D2FE; }
-        .soft-approved  { background:#DCFCE7; color:#166534; border-color:#BBF7D0; }
-        .soft-rejected  { background:#FEE2E2; color:#991B1B; border-color:#FECACA; }
-        .soft-cancelled { background:#F1F5F9; color:#64748B; border-color:#E2E8F0; }
+    /* 2. GLASS PANEL */
+    .glass-section { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); padding: 20px; }
 
-        .icon-box {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: #F1F5F9;
-            display: grid;
-            place-items: center;
-            color: #64748B;
-            flex: 0 0 auto;
-        }
+    /* 3. TABEL STATIS */
+    .table-glass { width: 100%; border-collapse: separate; border-spacing: 0 10px; color: white; table-layout: fixed; }
+    .table-glass th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; color: rgba(255,255,255,0.5); padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .table-glass tbody tr { background: rgba(0, 0, 0, 0.2); transition: 0.2s; }
+    .table-glass tbody tr:hover { background: rgba(0, 0, 0, 0.4); transform: translateY(-2px); }
+    .table-glass td { padding: 15px 10px; border: none; vertical-align: middle; word-wrap: break-word; }
+    .table-glass td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+    .table-glass td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
 
-        .table thead th {
-            font-size: .75rem;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            color: #64748B;
-        }
+    /* Buttons */
+    .btn-action { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; color: white; margin-left: 3px; transition: 0.3s; }
+    .btn-delete { background: rgba(255, 65, 108, 0.2); color: #ff416c; }
+    .btn-delete:hover { background: #ff416c; color: white; }
+    .btn-print { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .btn-print:hover { background: #38bdf8; color: #0f2027; }
+    
+    /* Form */
+    .form-glass { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1); color: white; }
+    .form-glass::placeholder { color: rgba(255, 255, 255, 0.5); }
+    .form-glass:focus { background: rgba(255, 255, 255, 0.2); color: white; border-color: #4fd1c5; box-shadow: none; }
+</style>
+@endpush
 
-        .card-rounded { border-radius: 16px; }
-    </style>
-</head>
+@section('content')
+<div class="circle-bg c1"></div>
+<div class="circle-bg c2"></div>
 
-<body class="bg-light">
-<div class="container py-4">
+<div class="container-fluid px-4 py-4">
 
-    {{-- Header sama seperti contoh kamu --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    {{-- HEADER --}}
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="mb-0">Klaim Saya</h3>
-            <small class="text-muted">Campus Lost & Found</small>
+            <h2 class="fw-bold mb-0 text-white">Klaim Saya</h2>
+            <p class="text-white-50 m-0">Pantau status dan riwayat barang yang Anda klaim.</p>
         </div>
+        
+        <div class="d-flex gap-2">
+            <a href="{{ route('claims.index') }}" class="btn btn-outline-light rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i> Menu
+            </a>
+            <a href="{{ route('claims.browse') }}" class="btn btn-primary rounded-pill px-4 shadow fw-bold" 
+               style="background: #4fd1c5; border: none; color: #0f2027;">
+                <i class="fas fa-plus me-2"></i> Klaim Baru
+            </a>
+        </div>
+    </div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="btn btn-outline-dark btn-sm">Logout</button>
+    @if(session('success'))
+    <div class="alert glass-section py-3 text-white border-0 d-flex align-items-center mb-4">
+        <i class="fas fa-check-circle text-success fs-4 me-3"></i>
+        <div>{{ session('success') }}</div>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+
+    <div class="glass-section mb-4 p-3">
+        <form method="GET" action="{{ route('claims.my-claims') }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="text-white-50 small mb-1">Pencarian</label>
+                    <input type="text" name="q" class="form-control form-glass rounded-3" 
+                           value="{{ request('q') }}" placeholder="Cari ID atau nama barang...">
+                </div>
+                <div class="col-md-3">
+                    <label class="text-white-50 small mb-1">Status</label>
+                    <select name="status" class="form-select form-glass rounded-3">
+                        <option value="" class="text-dark">Semua Status</option>
+                        <option value="pending" class="text-dark" {{ request('status')=='pending'?'selected':'' }}>Menunggu</option>
+                        <option value="approved" class="text-dark" {{ request('status')=='approved'?'selected':'' }}>Disetujui</option>
+                        <option value="rejected" class="text-dark" {{ request('status')=='rejected'?'selected':'' }}>Ditolak</option>
+                        <option value="taken" class="text-dark" {{ request('status')=='taken'?'selected':'' }}>Selesai / Diambil</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-light w-100 fw-bold" style="border-radius: 8px;">Filter</button>
+                </div>
+            </div>
         </form>
     </div>
 
-    <div class="mb-4">
-        <p class="text-muted mb-0">
-            Pantau status laporan barang hilang dan temuan Anda di sini. Cek pembaharuan secara berkala.
-        </p>
-    </div>
-
-    {{-- Filter Card --}}
-    <div class="card shadow-sm card-rounded mb-3">
-        <div class="card-body">
-            <form method="GET" action="{{ route('claims.index') }}">
-                <div class="row g-3 align-items-end">
-
-                    <div class="col-md-7">
-                        <label class="form-label fw-semibold">Pencarian</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white">
-                                {{-- Search icon --}}
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                </svg>
-                            </span>
-                            <input type="text"
-                                   class="form-control"
-                                   name="q"
-                                   value="{{ request('q') }}"
-                                   placeholder="Cari ID Klaim atau nama barang...">
+    <div class="glass-section px-3 py-3">
+        @if($claims->count() > 0)
+        <table class="table-glass">
+            <thead>
+                <tr>
+                    <th width="35%">Barang</th>
+                    <th width="20%">Kategori</th>
+                    <th width="20%">Tanggal Klaim</th>
+                    <th width="15%">Status</th>
+                    <th width="10%" class="text-end">Opsi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($claims as $claim)
+                    @php
+                        $badgeClass = match($claim->status) {
+                            'pending'   => 'bg-warning text-dark',
+                            'approved'  => 'bg-info text-dark',
+                            'rejected'  => 'bg-danger',
+                            'taken'     => 'bg-success', // Hijau untuk Taken
+                            default     => 'bg-secondary'
+                        };
+                        $label = match($claim->status) {
+                            'pending'   => 'Menunggu',
+                            'approved'  => 'Disetujui',
+                            'rejected'  => 'Ditolak',
+                            'taken'     => 'Selesai / Diambil',
+                            default     => ucfirst($claim->status)
+                        };
+                    @endphp
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white bg-opacity-10 rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width:45px;height:45px;">
+                                <i class="fas fa-box text-white-50"></i>
+                            </div>
+                            <div style="line-height: 1.1;">
+                                <div class="fw-bold text-white small">{{ $claim->item_name }}</div>
+                                <small class="text-white-50" style="font-size: 0.7rem;">
+                                    <i class="fas fa-map-marker-alt me-1 text-info"></i>{{ $claim->location_found ?? '-' }}
+                                </small>
+                            </div>
                         </div>
-                    </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-white bg-opacity-10 fw-normal" style="font-size: 0.7rem;">{{ $claim->category }}</span>
+                    </td>
+                    <td class="small text-white-50">
+                        {{ $claim->created_at->format('d M Y') }}
+                    </td>
+                    <td>
+                        <span class="badge {{ $badgeClass }} rounded-pill" style="font-size: 0.7rem;">{{ $label }}</span>
+                    </td>
+                    
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            
+                            {{-- 1. TOMBOL PRINT PDF --}}
+                            <a href="{{ route('claims.print', $claim->id) }}" target="_blank" class="btn-action btn-print" title="Cetak Result PDF">
+                                <i class="fas fa-print fa-xs"></i>
+                            </a>
+                            
+                            {{-- 2. TOMBOL KONFIRMASI (CHECK) - Jika belum diambil --}}
+                            @if($claim->status !== 'taken')
+                                <form action="{{ route('claims.mark-taken', $claim->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Barang sudah Anda terima? Barang akan dihapus dari daftar temuan publik.');">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn-action" style="background: rgba(52, 211, 153, 0.2); color: #34d399;" title="Konfirmasi Sudah Diambil">
+                                        <i class="fas fa-check fa-xs"></i>
+                                    </button>
+                                </form>
+                            @endif
 
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Filter Status</label>
-                        <select name="status" class="form-select">
-                            <option value="">Semua Status</option>
-                            @php
-                                $opts = [
-                                  'submitted' => 'Submitted',
-                                  'under_review' => 'Under Review',
-                                  'need_more_proof' => 'Need Info',
-                                  'approved' => 'Accepted',
-                                  'rejected' => 'Rejected',
-                                  'cancelled' => 'Cancelled',
-                                ];
-                            @endphp
-                            @foreach($opts as $val => $label)
-                                <option value="{{ $val }}" {{ request('status')===$val ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-1 d-grid">
-                        {{-- tombol kecil seperti ikon download di screenshot (sebenarnya ini submit filter) --}}
-                        <button type="submit" class="btn btn-outline-secondary" title="Terapkan filter">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="col-12 d-flex justify-content-end">
-                        <button type="submit" class="btn btn-primary px-4">Terapkan</button>
-                    </div>
-
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Alerts --}}
-    @if(session('success'))
-        <div class="alert alert-success shadow-sm card-rounded">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger shadow-sm card-rounded">{{ session('error') }}</div>
-    @endif
-
-    {{-- Table Card --}}
-    <div class="card shadow-sm card-rounded">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-borderless align-middle mb-0">
-                    <thead class="border-bottom bg-white">
-                        <tr>
-                            <th class="px-4 py-3">ID Klaim</th>
-                            <th class="px-4 py-3">Nama Barang</th>
-                            <th class="px-4 py-3">Tanggal Klaim</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3 text-end"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                    @forelse($claims as $claim)
-                        @php
-                            $itemName = $claim->item->name ?? ('Barang #' . $claim->item_id);
-                            $itemCategory = $claim->item->category ?? null;
-
-                            $code = '#CLM-' . now()->format('Y') . '-' . str_pad($claim->id, 3, '0', STR_PAD_LEFT);
-
-                            // mapping badge style
-                            $badgeClass = match($claim->status) {
-                                'under_review' => 'soft-review',
-                                'submitted' => 'soft-submitted',
-                                'need_more_proof' => 'soft-needinfo',
-                                'approved' => 'soft-approved',
-                                'rejected' => 'soft-rejected',
-                                'cancelled' => 'soft-cancelled',
-                                default => 'soft-submitted',
-                            };
-
-                            $dotColor = match($claim->status) {
-                                'under_review' => '#F59E0B',
-                                'submitted' => '#94A3B8',
-                                'need_more_proof' => '#6366F1',
-                                'approved' => '#22C55E',
-                                'rejected' => '#EF4444',
-                                'cancelled' => '#CBD5E1',
-                                default => '#94A3B8',
-                            };
-                        @endphp
-
-                        <tr class="border-bottom">
-                            <td class="px-4 py-3">
-                                <a href="{{ route('claims.show', $claim) }}" class="fw-semibold text-primary text-decoration-none">
-                                    {{ $code }}
+                            {{-- 3. EDIT & DELETE (Hanya jika Pending) --}}
+                            @if($claim->status === 'pending')
+                                <a href="{{ route('claims.edit', $claim->id) }}" class="btn-action" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;" title="Edit Pengajuan">
+                                    <i class="fas fa-pencil-alt fa-xs"></i>
                                 </a>
-                            </td>
 
-                            <td class="px-4 py-3">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="icon-box">
-                                        {{-- icon item --}}
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
-                                             viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0H4"/>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div class="fw-semibold">{{ $itemName }}</div>
-                                        <div class="text-muted small">{{ $itemCategory ?? '—' }}</div>
-                                    </div>
-                                </div>
-                            </td>
+                                <form action="{{ route('claims.destroy', $claim->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Batalkan klaim ini?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn-action btn-delete" title="Batalkan Pengajuan">
+                                        <i class="fas fa-times fa-xs"></i>
+                                    </button>
+                                </form>
+                            @endif
 
-                            <td class="px-4 py-3 text-muted">
-                                {{ optional($claim->created_at)->format('d M Y') }}
-                            </td>
-
-                            <td class="px-4 py-3">
-                                <span class="badge-soft {{ $badgeClass }}">
-                                    <span class="dot" style="background: {{ $dotColor }}"></span>
-                                    {{ $claim->statusLabel() }}
-                                </span>
-                            </td>
-
-                            <td class="px-4 py-3">
-                                <div class="d-flex justify-content-end gap-3">
-
-                                    {{-- Batalkan muncul kalau submitted (mirip screenshot) --}}
-                                    @if($claim->status === 'submitted')
-                                        <form method="POST" action="{{ route('claims.cancel', $claim) }}"
-                                              onsubmit="return confirm('Batalkan klaim ini?');">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-link text-danger fw-semibold p-0 text-decoration-none">
-                                                {{-- trash icon --}}
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
-                                                     viewBox="0 0 24 24" stroke="currentColor" class="me-1">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4"/>
-                                                </svg>
-                                                Batalkan
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    {{-- Download PDF kalau approved (kalau route ada) --}}
-                                    @if($claim->status === 'approved' && Route::has('claims.pdf'))
-                                        <a href="{{ route('claims.pdf', $claim) }}"
-                                           class="btn btn-link fw-semibold p-0 text-decoration-none">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
-                                                 viewBox="0 0 24 24" stroke="currentColor" class="me-1">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
-                                            </svg>
-                                            Download PDF
-                                        </a>
-                                    @endif
-
-                                    <a href="{{ route('claims.show', $claim) }}"
-                                       class="btn btn-link text-muted fw-semibold p-0 text-decoration-none">
-                                        Lihat Detail
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-4 py-5 text-center text-muted">
-                                Belum ada klaim.
-                            </td>
-                        </tr>
-                    @endforelse
-
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- Footer: range + pagination --}}
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 px-4 py-3 border-top bg-white">
-                <div class="text-muted small">
-                    Menampilkan <span class="fw-semibold">{{ $claims->firstItem() ?? 0 }}</span>
-                    sampai <span class="fw-semibold">{{ $claims->lastItem() ?? 0 }}</span>
-                    dari <span class="fw-semibold">{{ $claims->total() }}</span> hasil
-                </div>
-
-                <div>
-                    {{-- Pagination default Laravel (Tailwind). Kalau kamu mau Bootstrap pagination, lihat catatan di bawah --}}
-                    {{ $claims->onEachSide(1)->links() }}
-                </div>
-            </div>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        
+        <div class="mt-3">
+             <style> .pagination .page-item .page-link { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); color: #fff; } .pagination .page-item.active .page-link { background: #4fd1c5; border-color: #4fd1c5; color: #000; } </style>
+             {{ $claims->onEachSide(1)->links() }}
         </div>
-    </div>
 
+        @else
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-white-50 mb-3"></i>
+            <p class="text-white-50">Belum ada klaim yang diajukan.</p>
+        </div>
+        @endif
+    </div>
 </div>
-</body>
-</html>
+@endsection
