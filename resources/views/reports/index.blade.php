@@ -178,14 +178,17 @@
     </div>
 
     <div class="user-section">
-        <div class="user-info">
-            <span class="user-label">Halo,</span>
-            <span class="user-name" title="{{ Auth::user()->name ?? 'Guest' }}">
-                {{ Str::limit(Auth::user()->name ?? 'Guest User', 20) }}
-            </span>
-        </div>
-        
-        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'G') }}&background=random&color=fff&bold=true" class="user-avatar" alt="Profile">
+        {{-- BAGIAN YANG DIUBAH: DIBUNGKUS TAG A --}}
+        <a href="{{ route('home') }}" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; margin-right: 15px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+            <div class="user-info">
+                <span class="user-label">Halo,</span>
+                <span class="user-name" title="{{ Auth::user()->name ?? 'Guest' }}">
+                    {{ Str::limit(Auth::user()->name ?? 'Guest User', 20) }}
+                </span>
+            </div>
+            
+            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'G') }}&background=random&color=fff&bold=true" class="user-avatar" alt="Profile">
+        </a>
 
         <form action="{{ route('logout') }}" method="POST" style="margin:0;">
             @csrf
