@@ -124,15 +124,19 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="bg-white bg-opacity-10 rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width:35px;height:35px;min-width:35px;">
-                                        <i class="fas fa-box text-white small"></i>
-                                    </div>
+                                    @if($item->foto_barang)
+                                        <img src="{{ asset('storage/' . $item->foto_barang) }}" alt="Foto" class="rounded-3 me-3" style="width:40px; height:40px; min-width:40px; object-fit: cover;">
+                                    @else
+                                        <div class="bg-white bg-opacity-10 rounded-3 p-2 me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;min-width:40px;">
+                                            <i class="fas fa-box text-white small"></i>
+                                        </div>
+                                    @endif
                                     <div style="line-height: 1.1;">
                                         <div class="fw-bold text-white small">{{ Str::limit($item->nama_barang, 20) }}</div>
                                         <small class="text-white-50" style="font-size: 0.7rem;">{{ $item->category->nama ?? '-' }}</small>
                                     </div>
                                 </div>
-                            </td>
+                                </td>
                             <td class="small text-white-50">
                                 {{ \Carbon\Carbon::parse($item->tanggal_hilang)->format('d/m/y') }}
                             </td>
