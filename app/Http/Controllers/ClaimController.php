@@ -18,53 +18,62 @@ class ClaimController extends Controller
     }
 
     public function browse(Request $request)
-    {
-        $search = $request->search;
+{
+    $search = $request->search;
 
-        $foundItems = FoundItem::where('status', 'Unclaimed')
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('nama_barang', 'like', "%{$search}%")
-                      ->orWhere('deskripsi', 'like', "%{$search}%");
-                });
-            })
-            ->latest()
-            ->get();
-
-        foreach ($foundItems as $item) {
+    $foundItems = FoundItem::where('status', 'Unclaimed')
+        ->when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_barang', 'like', "%{$search}%")
+                  ->orWhere('deskripsi', 'like', "%{$search}%");
+            });
+        })
+        ->latest()
+        ->get()
+        ->map(function ($item) {
             $item->source_type = 'found';
             $item->display_lokasi = $item->lokasi_ditemukan ?? '-';
             $item->display_tanggal = $item->tanggal_ditemukan ?? null;
             $item->display_kategori = $item->kategori ?? '-';
-        }
+            return $item;
+        });
 
-        $lostItems = LostItem::query()
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('nama_barang', 'like', "%{$search}%")
-                      ->orWhere('deskripsi', 'like', "%{$search}%");
-                });
-            })
-            ->latest()
-            ->get();
-
-        foreach ($lostItems as $item) {
+    $lostItems = LostItem::query()
+        ->when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_barang', 'like', "%{$search}%")
+                  ->orWhere('deskripsi', 'like', "%{$search}%");
+            });
+        })
+        ->latest()
+        ->get()
+        ->map(function ($item) {
             $item->source_type = 'lost';
             $item->display_lokasi = $item->koordinat_lokasi ?? '-';
             $item->display_tanggal = $item->tanggal_hilang ?? null;
 
-            $category = null;
+            $categoryName = '-';
+
             if (!empty($item->kategori_id)) {
-                $category = Category::find($item->kategori_id);
+                $category = \App\Models\Category::find($item->kategori_id);
+                $categoryName = $category->nama ?? '-';
+            } elseif (!empty($item->kategori)) {
+                $categoryName = $item->kategori;
             }
 
-            $item->display_kategori = $category->nama ?? $item->kategori ?? '-';
-        }
+            $item->display_kategori = $categoryName;
 
-        $items = $foundItems->merge($lostItems)->sortByDesc('created_at');
+            return $item;
+        });
 
-        return view('claims.claim_barang', compact('items'));
-    }
+    $items = $foundItems
+        ->toBase()
+        ->concat($lostItems)
+        ->sortByDesc('created_at')
+        ->values();
+
+    return view('claims.claim_barang', compact('items'));
+}
 
     public function create(Request $request, $item_id)
     {
@@ -252,16 +261,37 @@ class ClaimController extends Controller
     }
 
     public function printPdf($id)
-    {
-        $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
+{
+    $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
 
-        $originalItem = $this->findOriginalItem($claim);
+    $originalItem = $this->findOriginalItem($claim);
 
-        $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem'))
-            ->setPaper('a4', 'portrait');
+    $photoBase64 = null;
 
-        return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
+    if ($originalItem && !empty($originalItem->foto_barang)) {
+        $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
+
+        if (file_exists($photoPath)) {
+            $extension = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
+
+            $mime = match ($extension) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                default => null,
+            };
+
+            if ($mime) {
+                $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($photoPath));
+            }
+        }
     }
+
+    $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem', 'photoBase64'))
+        ->setPaper('a4', 'portrait');
+
+    return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
+}
 
     private function findOriginalItem(Claim $claim)
     {
