@@ -189,8 +189,8 @@
 <div class="photo-section">
     <span class="label">Lampiran Foto Barang</span>
     <div class="photo-box">
-        @if(!empty($photoBase64))
-            <img src="{{ $photoBase64 }}" class="photo-img">
+        @if(isset($originalItem) && $originalItem->foto_barang)
+            <img src="{{ asset('storage/' . $originalItem->foto_barang) }}" class="photo-img">
         @else
             <span style="color: #cbd5e0; font-size: 12px; line-height: 250px;">
                 Tidak ada foto tersedia

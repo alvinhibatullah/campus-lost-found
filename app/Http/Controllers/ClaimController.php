@@ -4,92 +4,174 @@ namespace App\Http\Controllers;
 
 use App\Models\Claim;
 use App\Models\FoundItem;
+use App\Models\LostItem;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ClaimController extends Controller
 {
-    // 1. MENU UTAMA
     public function index()
     {
         return view('claims.index');
     }
 
-    // 2. BROWSE BARANG (Hanya Tampilkan Unclaimed)
     public function browse(Request $request)
     {
-        $query = FoundItem::where('status', 'Unclaimed'); 
+        $search = $request->search;
 
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('deskripsi', 'like', "%{$search}%");
-                // Kategori dihapus sementara jika kolom tidak ada
-            });
+        $foundItems = FoundItem::where('status', 'Unclaimed')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama_barang', 'like', "%{$search}%")
+                      ->orWhere('deskripsi', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->get();
+
+        foreach ($foundItems as $item) {
+            $item->source_type = 'found';
+            $item->display_lokasi = $item->lokasi_ditemukan ?? '-';
+            $item->display_tanggal = $item->tanggal_ditemukan ?? null;
+            $item->display_kategori = $item->kategori ?? '-';
         }
 
-        $items = $query->latest()->get();
+        $lostItems = LostItem::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama_barang', 'like', "%{$search}%")
+                      ->orWhere('deskripsi', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->get();
+
+        foreach ($lostItems as $item) {
+            $item->source_type = 'lost';
+            $item->display_lokasi = $item->koordinat_lokasi ?? '-';
+            $item->display_tanggal = $item->tanggal_hilang ?? null;
+
+            $category = null;
+            if (!empty($item->kategori_id)) {
+                $category = Category::find($item->kategori_id);
+            }
+
+            $item->display_kategori = $category->nama ?? $item->kategori ?? '-';
+        }
+
+        $items = $foundItems->merge($lostItems)->sortByDesc('created_at');
+
         return view('claims.claim_barang', compact('items'));
     }
 
-    // 3. FORM KLAIM
-    public function create($item_id)
+    public function create(Request $request, $item_id)
     {
-        $item = FoundItem::findOrFail($item_id);
+        $sourceType = $request->query('type', 'found');
+
+        if ($sourceType === 'lost') {
+            $item = LostItem::findOrFail($item_id);
+
+            $category = null;
+            if (!empty($item->kategori_id)) {
+                $category = Category::find($item->kategori_id);
+            }
+
+            $item->source_type = 'lost';
+            $item->display_kategori = $category->nama ?? $item->kategori ?? '-';
+            $item->display_lokasi = $item->koordinat_lokasi ?? '-';
+            $item->display_tanggal = $item->tanggal_hilang ?? null;
+        } else {
+            $item = FoundItem::findOrFail($item_id);
+
+            $item->source_type = 'found';
+            $item->display_kategori = $item->kategori ?? '-';
+            $item->display_lokasi = $item->lokasi_ditemukan ?? '-';
+            $item->display_tanggal = $item->tanggal_ditemukan ?? null;
+        }
+
         return view('claims.create', compact('item'));
     }
 
-    // 4. SIMPAN KLAIM
     public function store(Request $request)
     {
         $request->validate([
             'item_id' => 'required',
+            'source_type' => 'required|in:found,lost',
             'claim_reason' => 'required|string|max:1000',
             'phone' => 'nullable|string|max:20',
         ]);
 
-        $sourceItem = FoundItem::findOrFail($request->item_id);
+        if ($request->source_type === 'lost') {
+            $sourceItem = LostItem::findOrFail($request->item_id);
 
-        $exists = Claim::where('user_id', Auth::id())
-                       ->where('item_name', $sourceItem->nama_barang)
-                       ->where('date_found', $sourceItem->tanggal_ditemukan)
-                       ->exists();
+            $category = null;
+            if (!empty($sourceItem->kategori_id)) {
+                $category = Category::find($sourceItem->kategori_id);
+            }
 
-        if ($exists) {
-            return redirect()->route('claims.my-claims')->with('error', 'Anda sudah pernah mengajukan klaim untuk barang ini.');
+            $itemName = $sourceItem->nama_barang;
+            $categoryName = $category->nama ?? $sourceItem->kategori ?? '-';
+            $location = $sourceItem->koordinat_lokasi ?? '-';
+            $date = $sourceItem->tanggal_hilang;
+            $description = $sourceItem->deskripsi;
+        } else {
+            $sourceItem = FoundItem::findOrFail($request->item_id);
+
+            $itemName = $sourceItem->nama_barang;
+            $categoryName = $sourceItem->kategori ?? '-';
+            $location = $sourceItem->lokasi_ditemukan ?? '-';
+            $date = $sourceItem->tanggal_ditemukan;
+            $description = $sourceItem->deskripsi;
         }
 
-        $fullReason = $request->claim_reason . ($request->phone ? " (No. WA: {$request->phone})" : "");
+        $exists = Claim::where('user_id', Auth::id())
+            ->where('item_name', $itemName)
+            ->where('date_found', $date)
+            ->where('description', $description)
+            ->exists();
+
+        if ($exists) {
+            return redirect()
+                ->route('claims.my-claims')
+                ->with('error', 'Anda sudah pernah mengajukan klaim untuk barang ini.');
+        }
+
+        $fullReason = $request->claim_reason;
+        if ($request->phone) {
+            $fullReason .= " (No. WA: {$request->phone})";
+        }
 
         Claim::create([
             'user_id'        => Auth::id(),
-            'item_name'      => $sourceItem->nama_barang,
-            'category'       => $sourceItem->kategori,
-            'location_found' => $sourceItem->lokasi_ditemukan, 
-            'date_found'     => $sourceItem->tanggal_ditemukan,
-            'description'    => $sourceItem->deskripsi,
+            'item_name'      => $itemName,
+            'category'       => $categoryName,
+            'location_found' => $location,
+            'date_found'     => $date,
+            'description'    => $description,
             'status'         => 'pending',
             'claim_reason'   => $fullReason,
         ]);
 
-        return redirect()->route('claims.my-claims')->with('success', 'Formulir klaim berhasil dikirim! Menunggu verifikasi.');
+        return redirect()
+            ->route('claims.my-claims')
+            ->with('success', 'Formulir klaim berhasil dikirim! Menunggu verifikasi.');
     }
 
-    // 5. EDIT FORM
     public function edit($id)
     {
         $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
 
         if ($claim->status !== 'pending') {
-            return redirect()->route('claims.my-claims')->with('error', 'Klaim yang sudah diproses tidak dapat diedit.');
+            return redirect()
+                ->route('claims.my-claims')
+                ->with('error', 'Klaim yang sudah diproses tidak dapat diedit.');
         }
 
         return view('claims.edit', compact('claim'));
     }
 
-    // 6. UPDATE DATA
     public function update(Request $request, $id)
     {
         $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
@@ -103,85 +185,104 @@ class ClaimController extends Controller
         ]);
 
         $claim->update([
-            'claim_reason' => $request->claim_reason
+            'claim_reason' => $request->claim_reason,
         ]);
 
-        return redirect()->route('claims.my-claims')->with('success', 'Data pengajuan klaim berhasil diperbarui.');
+        return redirect()
+            ->route('claims.my-claims')
+            ->with('success', 'Data pengajuan klaim berhasil diperbarui.');
     }
 
-    // 7. LIST KLAIM SAYA
     public function myClaims(Request $request)
-{
-    $query = Claim::where('user_id', Auth::id());
-
-    if ($request->has('q') && $request->q != '') {
-        $query->where('item_name', 'like', '%' . $request->q . '%');
-    }
-
-    if ($request->has('status') && $request->status != '') {
-        $query->where('status', $request->status);
-    }
-
-    $claims = $query->latest()->paginate(10);
-
-    $claims->getCollection()->transform(function ($claim) {
-        $claim->originalItem = FoundItem::where('nama_barang', $claim->item_name)
-            ->where('tanggal_ditemukan', $claim->date_found)
-            ->where('deskripsi', $claim->description)
-            ->first();
-
-        return $claim;
-    });
-
-    return view('claims.claims', compact('claims'));
-}
-
-    // 8. TANDAI SUDAH DIAMBIL (LOGIKA PENTING)
-    public function markAsTaken($id)
     {
-        // A. Update Status Klaim User
-        $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
-        $claim->update(['status' => 'taken']);
+        $query = Claim::where('user_id', Auth::id());
 
-        // B. Update Status Barang Asli di Database FoundItem
-        // Supaya hilang dari list pencarian (Browse hanya menampilkan 'Unclaimed')
-        $originalItem = FoundItem::where('nama_barang', $claim->item_name)
-                                 ->where('tanggal_ditemukan', $claim->date_found)
-                                 ->where('deskripsi', $claim->description)
-                                 ->first();
-
-        if ($originalItem) {
-            $originalItem->update(['status' => 'Claimed']); 
+        if ($request->has('q') && $request->q != '') {
+            $query->where('item_name', 'like', '%' . $request->q . '%');
         }
 
-        return redirect()->route('claims.my-claims')->with('success', 'Barang berhasil dikonfirmasi telah diambil!');
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        $claims = $query->latest()->paginate(10);
+
+        $claims->getCollection()->transform(function ($claim) {
+            $claim->originalItem = $this->findOriginalItem($claim);
+            return $claim;
+        });
+
+        return view('claims.claims', compact('claims'));
     }
 
-    // 9. BATALKAN
+    public function markAsTaken($id)
+    {
+        $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
+
+        $claim->update([
+            'status' => 'taken',
+        ]);
+
+        $foundItem = FoundItem::where('nama_barang', $claim->item_name)
+            ->whereDate('tanggal_ditemukan', $claim->date_found)
+            ->first();
+
+        if ($foundItem) {
+            $foundItem->update([
+                'status' => 'Claimed',
+            ]);
+        }
+
+        return redirect()
+            ->route('claims.my-claims')
+            ->with('success', 'Barang berhasil dikonfirmasi telah diambil!');
+    }
+
     public function destroy($id)
     {
         $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
-        
-        if ($claim->status == 'pending') {
+
+        if ($claim->status === 'pending') {
             $claim->delete();
+
             return back()->with('success', 'Pengajuan klaim berhasil dibatalkan.');
         }
 
         return back()->with('error', 'Klaim yang sudah diproses tidak dapat dibatalkan.');
     }
 
-    // 10. PRINT PDF
     public function printPdf($id)
-{
-    $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
+    {
+        $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
 
-    $originalItem = FoundItem::where('nama_barang', $claim->item_name)
-        ->where('tanggal_ditemukan', $claim->date_found)
-        ->where('deskripsi', $claim->description)
-        ->first();
+        $originalItem = $this->findOriginalItem($claim);
 
-    $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem'))
-        ->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem'))
+            ->setPaper('a4', 'portrait');
 
-    return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
-}}
+        return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
+    }
+
+    private function findOriginalItem(Claim $claim)
+    {
+        $foundQuery = FoundItem::where('nama_barang', $claim->item_name);
+
+        if (!empty($claim->date_found)) {
+            $foundQuery->whereDate('tanggal_ditemukan', $claim->date_found);
+        }
+
+        $foundItem = $foundQuery->first();
+
+        if ($foundItem) {
+            return $foundItem;
+        }
+
+        $lostQuery = LostItem::where('nama_barang', $claim->item_name);
+
+        if (!empty($claim->date_found)) {
+            $lostQuery->whereDate('tanggal_hilang', $claim->date_found);
+        }
+
+        return $lostQuery->first();
+    }
+}
