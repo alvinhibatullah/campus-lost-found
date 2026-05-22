@@ -276,125 +276,114 @@ class ClaimController extends Controller
             default => ucfirst($claim->status ?? '-'),
         };
 
-        $photoHtml = $this->buildClaimPdfPhotoHtml($originalItem);
+        $photoHtml = $this->buildClaimPdfPhotoHtml($originalItem, $claim->id);
         $html = $this->buildClaimPdfHtml($claim, $tanggal, $status, $photoHtml);
 
-        try {
-            return Pdf::loadHTML($html)
-                ->setPaper('a4', 'portrait')
-                ->stream('Laporan-Klaim-' . $claim->id . '.pdf');
-        } catch (\Throwable $e) {
-            $fallbackPhoto = '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto gagal dimuat pada PDF.</span>';
-            $fallbackHtml = $this->buildClaimPdfHtml($claim, $tanggal, $status, $fallbackPhoto);
-
-            return Pdf::loadHTML($fallbackHtml)
-                ->setPaper('a4', 'portrait')
-                ->stream('Laporan-Klaim-' . $claim->id . '.pdf');
-        }
+        return Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->stream('Laporan-Klaim-' . $claim->id . '.pdf');
     }
 
-    private function buildClaimPdfPhotoHtml($originalItem): string
+    private function buildClaimPdfPhotoHtml($originalItem, int $claimId): string
     {
         if (!$originalItem || empty($originalItem->foto_barang)) {
             return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto tidak tersedia pada PDF.</span>';
         }
 
         try {
-            $path = $originalItem->foto_barang;
+            $sourcePath = $originalItem->foto_barang;
 
-            if (!Storage::disk('public')->exists($path)) {
+            if (!Storage::disk('public')->exists($sourcePath)) {
                 return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">File foto tidak ditemukan di storage.</span>';
             }
 
-            $imageData = Storage::disk('public')->get($path);
+            $imageData = Storage::disk('public')->get($sourcePath);
 
             if (empty($imageData)) {
                 return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">File foto kosong.</span>';
             }
 
-            $dataUri = $this->makePdfSafeImageDataUri($imageData);
-
-            if (!$dataUri) {
-                return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Format foto tidak valid.</span>';
+            if (!function_exists('imagecreatefromstring')) {
+                return $this->buildDirectBase64ImageHtml($imageData);
             }
 
-            return '<img src="' . $dataUri . '" style="width:220px;height:auto;display:block;margin:10px auto 0;border-radius:8px;">';
+            $sourceImage = @imagecreatefromstring($imageData);
+
+            if (!$sourceImage) {
+                return $this->buildDirectBase64ImageHtml($imageData);
+            }
+
+            $sourceWidth = imagesx($sourceImage);
+            $sourceHeight = imagesy($sourceImage);
+
+            if ($sourceWidth <= 0 || $sourceHeight <= 0) {
+                imagedestroy($sourceImage);
+
+                return $this->buildDirectBase64ImageHtml($imageData);
+            }
+
+            $targetWidth = 600;
+            $targetHeight = (int) round(($sourceHeight / $sourceWidth) * $targetWidth);
+
+            if ($targetHeight <= 0) {
+                $targetHeight = 400;
+            }
+
+            $targetImage = imagecreatetruecolor($targetWidth, $targetHeight);
+
+            $white = imagecolorallocate($targetImage, 255, 255, 255);
+            imagefilledrectangle($targetImage, 0, 0, $targetWidth, $targetHeight, $white);
+
+            imagecopyresampled(
+                $targetImage,
+                $sourceImage,
+                0,
+                0,
+                0,
+                0,
+                $targetWidth,
+                $targetHeight,
+                $sourceWidth,
+                $sourceHeight
+            );
+
+            Storage::disk('public')->makeDirectory('pdf_temp');
+
+            $tempRelativePath = 'pdf_temp/claim_' . $claimId . '.jpg';
+            $tempAbsolutePath = storage_path('app/public/' . $tempRelativePath);
+
+            imagejpeg($targetImage, $tempAbsolutePath, 80);
+
+            imagedestroy($sourceImage);
+            imagedestroy($targetImage);
+
+            if (!file_exists($tempAbsolutePath)) {
+                return $this->buildDirectBase64ImageHtml($imageData);
+            }
+
+            return '<img src="' . $tempAbsolutePath . '" style="width:220px;height:auto;display:block;margin:10px auto 0;">';
         } catch (\Throwable $e) {
-            return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto gagal diproses.</span>';
+            return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto gagal dimuat pada PDF.</span>';
         }
     }
 
-    private function makePdfSafeImageDataUri(string $imageData): ?string
+    private function buildDirectBase64ImageHtml(string $imageData): string
     {
-        $info = @getimagesizefromstring($imageData);
+        $imageInfo = @getimagesizefromstring($imageData);
 
-        if (!$info || empty($info['mime'])) {
-            return null;
+        if (!$imageInfo || empty($imageInfo['mime'])) {
+            return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Format foto tidak valid.</span>';
         }
 
-        if (!in_array($info['mime'], ['image/jpeg', 'image/png'])) {
-            return null;
+        $mime = $imageInfo['mime'];
+
+        if (!in_array($mime, ['image/jpeg', 'image/png'])) {
+            return '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Format foto tidak didukung PDF.</span>';
         }
 
-        if (!function_exists('imagecreatefromstring')) {
-            return 'data:' . $info['mime'] . ';base64,' . base64_encode($imageData);
-        }
+        $base64 = base64_encode($imageData);
 
-        $sourceImage = @imagecreatefromstring($imageData);
-
-        if (!$sourceImage) {
-            return 'data:' . $info['mime'] . ';base64,' . base64_encode($imageData);
-        }
-
-        $sourceWidth = imagesx($sourceImage);
-        $sourceHeight = imagesy($sourceImage);
-
-        if ($sourceWidth <= 0 || $sourceHeight <= 0) {
-            imagedestroy($sourceImage);
-
-            return 'data:' . $info['mime'] . ';base64,' . base64_encode($imageData);
-        }
-
-        $maxWidth = 800;
-
-        if ($sourceWidth > $maxWidth) {
-            $targetWidth = $maxWidth;
-            $targetHeight = (int) round(($sourceHeight / $sourceWidth) * $targetWidth);
-        } else {
-            $targetWidth = $sourceWidth;
-            $targetHeight = $sourceHeight;
-        }
-
-        $targetImage = imagecreatetruecolor($targetWidth, $targetHeight);
-
-        $white = imagecolorallocate($targetImage, 255, 255, 255);
-        imagefilledrectangle($targetImage, 0, 0, $targetWidth, $targetHeight, $white);
-
-        imagecopyresampled(
-            $targetImage,
-            $sourceImage,
-            0,
-            0,
-            0,
-            0,
-            $targetWidth,
-            $targetHeight,
-            $sourceWidth,
-            $sourceHeight
-        );
-
-        ob_start();
-        imagejpeg($targetImage, null, 80);
-        $jpegData = ob_get_clean();
-
-        imagedestroy($sourceImage);
-        imagedestroy($targetImage);
-
-        if (!$jpegData) {
-            return 'data:' . $info['mime'] . ';base64,' . base64_encode($imageData);
-        }
-
-        return 'data:image/jpeg;base64,' . base64_encode($jpegData);
+        return '<img src="data:' . $mime . ';base64,' . $base64 . '" style="width:220px;height:auto;display:block;margin:10px auto 0;">';
     }
 
     private function buildClaimPdfHtml(Claim $claim, string $tanggal, string $status, string $photoHtml): string
