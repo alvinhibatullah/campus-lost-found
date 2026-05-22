@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Storage;
 use App\Models\Claim;
 use App\Models\FoundItem;
 use App\Models\LostItem;
@@ -264,6 +265,40 @@ class ClaimController extends Controller
 {
     $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
 
+    $originalItem = $this->findOriginalItem($claim);
+
+    $photoHtml = '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto tidak tersedia pada PDF</span>';
+
+    if ($originalItem && !empty($originalItem->foto_barang)) {
+        try {
+            $path = $originalItem->foto_barang;
+
+            if (Storage::disk('public')->exists($path)) {
+                $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+                $mime = match ($extension) {
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    'png' => 'image/png',
+                    default => null,
+                };
+
+                if ($mime !== null) {
+                    $imageData = Storage::disk('public')->get($path);
+                    $base64Image = base64_encode($imageData);
+
+                    $photoHtml = '
+                        <img 
+                            src="data:' . $mime . ';base64,' . $base64Image . '" 
+                            style="width:220px; height:auto; margin-top:10px; border-radius:8px;"
+                        >
+                    ';
+                }
+            }
+        } catch (\Throwable $e) {
+            $photoHtml = '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto gagal dimuat pada PDF</span>';
+        }
+    }
+
     $tanggal = '-';
 
     if (!empty($claim->date_found)) {
@@ -352,8 +387,9 @@ class ClaimController extends Controller
                 color: #a0aec0;
                 font-size: 12px;
                 border: 2px dashed #cbd5e0;
-                padding: 40px;
+                padding: 30px;
                 background: #f7fafc;
+                min-height: 220px;
             }
 
             .footer {
@@ -415,7 +451,7 @@ class ClaimController extends Controller
         </div>
 
         <div class="photo-box">
-            Foto tidak ditampilkan pada PDF untuk mencegah error server.
+            ' . $photoHtml . '
         </div>
 
         <div class="footer">
