@@ -266,38 +266,35 @@ class ClaimController extends Controller
 
     $originalItem = $this->findOriginalItem($claim);
 
-    $photoBase64 = null;
+    $photoHtml = '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto tidak tersedia pada PDF</span>';
 
-    try {
-        if ($originalItem && !empty($originalItem->foto_barang)) {
-            $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
+    if ($originalItem && !empty($originalItem->foto_barang)) {
+        $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
 
-            if (is_file($photoPath) && is_readable($photoPath) && filesize($photoPath) <= 2000000) {
-                $extension = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
+        if (file_exists($photoPath) && is_file($photoPath) && is_readable($photoPath)) {
+            $ext = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
 
-                $mime = match ($extension) {
-                    'jpg', 'jpeg' => 'image/jpeg',
-                    'png' => 'image/png',
-                    default => null,
-                };
+            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                try {
+                    $mime = $ext === 'png' ? 'image/png' : 'image/jpeg';
+                    $base64 = base64_encode(file_get_contents($photoPath));
 
-                if ($mime) {
-                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($photoPath));
+                    $photoHtml = '<img src="data:' . $mime . ';base64,' . $base64 . '" style="width:220px;height:auto;margin-top:10px;border-radius:8px;">';
+                } catch (\Throwable $e) {
+                    $photoHtml = '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto gagal diproses</span>';
                 }
             }
         }
-    } catch (\Throwable $e) {
-        $photoBase64 = null;
     }
 
     $tanggal = '-';
 
-    try {
-        if (!empty($claim->date_found)) {
+    if (!empty($claim->date_found)) {
+        try {
             $tanggal = \Carbon\Carbon::parse($claim->date_found)->format('d F Y');
+        } catch (\Throwable $e) {
+            $tanggal = $claim->date_found;
         }
-    } catch (\Throwable $e) {
-        $tanggal = $claim->date_found ?? '-';
     }
 
     $status = match ($claim->status) {
@@ -307,10 +304,6 @@ class ClaimController extends Controller
         'taken' => 'Selesai / Diambil',
         default => ucfirst($claim->status ?? '-'),
     };
-
-    $photoHtml = $photoBase64
-        ? '<img src="' . $photoBase64 . '" style="width:220px;height:auto;margin-top:10px;border-radius:8px;">'
-        : '<div style="color:#a0aec0;font-size:12px;line-height:220px;">Foto tidak tersedia pada PDF</div>';
 
     $html = '
     <!DOCTYPE html>
