@@ -264,29 +264,6 @@ class ClaimController extends Controller
 {
     $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
 
-    $originalItem = $this->findOriginalItem($claim);
-
-    $photoHtml = '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto tidak tersedia pada PDF</span>';
-
-    if ($originalItem && !empty($originalItem->foto_barang)) {
-        $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
-
-        if (file_exists($photoPath) && is_file($photoPath) && is_readable($photoPath)) {
-            $ext = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
-
-            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
-                try {
-                    $mime = $ext === 'png' ? 'image/png' : 'image/jpeg';
-                    $base64 = base64_encode(file_get_contents($photoPath));
-
-                    $photoHtml = '<img src="data:' . $mime . ';base64,' . $base64 . '" style="width:220px;height:auto;margin-top:10px;border-radius:8px;">';
-                } catch (\Throwable $e) {
-                    $photoHtml = '<span style="color:#a0aec0;font-size:12px;line-height:220px;">Foto gagal diproses</span>';
-                }
-            }
-        }
-    }
-
     $tanggal = '-';
 
     if (!empty($claim->date_found)) {
@@ -369,20 +346,14 @@ class ClaimController extends Controller
                 border-radius: 5px;
             }
 
-            .photo-section {
-                margin-top: 35px;
-                text-align: center;
-                page-break-inside: avoid;
-            }
-
             .photo-box {
-                width: 260px;
-                min-height: 240px;
-                margin: 10px auto;
-                border: 2px dashed #cbd5e0;
-                border-radius: 8px;
-                background: #f7fafc;
+                margin-top: 30px;
                 text-align: center;
+                color: #a0aec0;
+                font-size: 12px;
+                border: 2px dashed #cbd5e0;
+                padding: 40px;
+                background: #f7fafc;
             }
 
             .footer {
@@ -443,11 +414,8 @@ class ClaimController extends Controller
             <div class="value reason">' . e($claim->claim_reason ?? '-') . '</div>
         </div>
 
-        <div class="photo-section">
-            <span class="label">Lampiran Foto Barang</span>
-            <div class="photo-box">
-                ' . $photoHtml . '
-            </div>
+        <div class="photo-box">
+            Foto tidak ditampilkan pada PDF untuk mencegah error server.
         </div>
 
         <div class="footer">
