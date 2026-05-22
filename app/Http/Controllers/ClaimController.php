@@ -262,42 +262,9 @@ class ClaimController extends Controller
 
     public function printPdf($id)
 {
-    $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
-
-    $originalItem = $this->findOriginalItem($claim);
-
-    $photoBase64 = null;
-
-    try {
-        if ($originalItem && !empty($originalItem->foto_barang)) {
-            $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
-
-            if (is_file($photoPath) && is_readable($photoPath)) {
-                $extension = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
-
-                $mime = match ($extension) {
-                    'jpg', 'jpeg' => 'image/jpeg',
-                    'png' => 'image/png',
-                    default => null,
-                };
-
-                // Hindari gambar terlalu besar agar DomPDF tidak error
-                if ($mime && filesize($photoPath) <= 1500000) {
-                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($photoPath));
-                }
-            }
-        }
-    } catch (\Throwable $e) {
-        $photoBase64 = null;
-    }
-
-    $pdf = Pdf::loadView('claims.pdf_single', [
-        'claim' => $claim,
-        'originalItem' => $originalItem,
-        'photoBase64' => $photoBase64,
-    ])->setPaper('a4', 'portrait');
-
-    return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
+    return Pdf::loadHTML('<h1>PDF TEST BERHASIL</h1>')
+        ->setPaper('a4', 'portrait')
+        ->stream('test.pdf');
 }
 
     private function findOriginalItem(Claim $claim)
