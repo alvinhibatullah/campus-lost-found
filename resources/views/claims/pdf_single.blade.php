@@ -100,10 +100,9 @@
         }
 
         .photo-img {
-            max-width: 240px;
-            max-height: 240px;
-            object-fit: contain;
-            margin-top: 5px;
+            width: 220px;
+            height: auto;
+            margin-top: 10px;
         }
 
         .footer {
@@ -194,7 +193,7 @@
             <img src="{!! $photoBase64 !!}" class="photo-img">
         @else
             <span style="color: #cbd5e0; font-size: 12px; line-height: 250px;">
-                Tidak ada foto tersedia
+                Foto tidak tersedia pada PDF
             </span>
         @endif
     </div>

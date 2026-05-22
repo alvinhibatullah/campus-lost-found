@@ -268,27 +268,34 @@ class ClaimController extends Controller
 
     $photoBase64 = null;
 
-    if ($originalItem && !empty($originalItem->foto_barang)) {
-        $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
+    try {
+        if ($originalItem && !empty($originalItem->foto_barang)) {
+            $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
 
-        if (file_exists($photoPath)) {
-            $extension = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
+            if (is_file($photoPath) && is_readable($photoPath)) {
+                $extension = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
 
-            $mime = match ($extension) {
-                'jpg', 'jpeg' => 'image/jpeg',
-                'png' => 'image/png',
-                'webp' => 'image/webp',
-                default => null,
-            };
+                $mime = match ($extension) {
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    'png' => 'image/png',
+                    default => null,
+                };
 
-            if ($mime) {
-                $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($photoPath));
+                // Hindari gambar terlalu besar agar DomPDF tidak error
+                if ($mime && filesize($photoPath) <= 1500000) {
+                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($photoPath));
+                }
             }
         }
+    } catch (\Throwable $e) {
+        $photoBase64 = null;
     }
 
-    $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem', 'photoBase64'))
-        ->setPaper('a4', 'portrait');
+    $pdf = Pdf::loadView('claims.pdf_single', [
+        'claim' => $claim,
+        'originalItem' => $originalItem,
+        'photoBase64' => $photoBase64,
+    ])->setPaper('a4', 'portrait');
 
     return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
 }
