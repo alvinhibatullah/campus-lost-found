@@ -111,19 +111,30 @@ class ClaimController extends Controller
 
     // 7. LIST KLAIM SAYA
     public function myClaims(Request $request)
-    {
-        $query = Claim::where('user_id', Auth::id());
+{
+    $query = Claim::where('user_id', Auth::id());
 
-        if ($request->has('q')) {
-            $query->where('item_name', 'like', '%' . $request->q . '%');
-        }
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
-        }
-
-        $claims = $query->latest()->paginate(10);
-        return view('claims.claims', compact('claims'));
+    if ($request->has('q') && $request->q != '') {
+        $query->where('item_name', 'like', '%' . $request->q . '%');
     }
+
+    if ($request->has('status') && $request->status != '') {
+        $query->where('status', $request->status);
+    }
+
+    $claims = $query->latest()->paginate(10);
+
+    $claims->getCollection()->transform(function ($claim) {
+        $claim->originalItem = FoundItem::where('nama_barang', $claim->item_name)
+            ->where('tanggal_ditemukan', $claim->date_found)
+            ->where('deskripsi', $claim->description)
+            ->first();
+
+        return $claim;
+    });
+
+    return view('claims.claims', compact('claims'));
+}
 
     // 8. TANDAI SUDAH DIAMBIL (LOGIKA PENTING)
     public function markAsTaken($id)
@@ -163,11 +174,15 @@ class ClaimController extends Controller
     public function printPdf($id)
     {
         $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
-        $originalItem = FoundItem::where('nama_barang', $claim->item_name)
-                                 ->where('tanggal_ditemukan', $claim->date_found)
-                                 ->first();
 
-        $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem'));
-        return $pdf->stream('Laporan-Klaim-#' . $claim->id . '.pdf');
+        $originalItem = FoundItem::where('nama_barang', $claim->item_name)
+            ->where('tanggal_ditemukan', $claim->date_found)
+            ->where('deskripsi', $claim->description)
+            ->first();
+
+        $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
     }
 }

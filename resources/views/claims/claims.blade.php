@@ -130,9 +130,15 @@
                 <tr>
                     <td>
                         <div class="d-flex align-items-center">
-                            <div class="bg-white bg-opacity-10 rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width:45px;height:45px;">
-                                <i class="fas fa-box text-white-50"></i>
-                            </div>
+                            <div class="bg-white bg-opacity-10 rounded-3 p-1 me-2 d-flex align-items-center justify-content-center" style="width:45px;height:45px; overflow:hidden;">
+                                    @if (!empty($claim->originalItem) && $claim->originalItem->foto_barang)
+                                        <img src="{{ asset('storage/' . $claim->originalItem->foto_barang) }}"
+                                            alt="Foto Barang"
+                                            style="width:45px; height:45px; object-fit:cover; border-radius:8px;">
+                                    @else
+                                        <i class="fas fa-box text-white-50"></i>
+                                    @endif
+                                </div>
                             <div style="line-height: 1.1;">
                                 <div class="fw-bold text-white small">{{ $claim->item_name }}</div>
                                 <small class="text-white-50" style="font-size: 0.7rem;">
