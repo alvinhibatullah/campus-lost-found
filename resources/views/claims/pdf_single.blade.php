@@ -190,7 +190,7 @@
     <span class="label">Lampiran Foto Barang</span>
     <div class="photo-box">
         @if(!empty($photoBase64))
-            <img src="{!! $photoBase64 !!}" class="photo-img">
+            <img src="{{ $photoBase64 }}" class="photo-img">
         @else
             <span style="color: #cbd5e0; font-size: 12px; line-height: 250px;">
                 Tidak ada foto tersedia

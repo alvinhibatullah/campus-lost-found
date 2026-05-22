@@ -172,7 +172,7 @@ class ClaimController extends Controller
 
     // 10. PRINT PDF
     public function printPdf($id)
-    {
+{
     $claim = Claim::where('user_id', Auth::id())->findOrFail($id);
 
     $originalItem = FoundItem::where('nama_barang', $claim->item_name)
@@ -180,33 +180,8 @@ class ClaimController extends Controller
         ->where('deskripsi', $claim->description)
         ->first();
 
-    $photoBase64 = null;
-
-    try {
-        if ($originalItem && $originalItem->foto_barang) {
-            $photoPath = storage_path('app/public/' . $originalItem->foto_barang);
-
-            if (is_file($photoPath) && is_readable($photoPath) && filesize($photoPath) <= 2 * 1024 * 1024) {
-                $extension = strtolower(pathinfo($photoPath, PATHINFO_EXTENSION));
-
-                $mime = match ($extension) {
-                    'jpg', 'jpeg' => 'image/jpeg',
-                    'png' => 'image/png',
-                    default => null,
-                };
-
-                if ($mime) {
-                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($photoPath));
-                }
-            }
-        }
-    } catch (\Throwable $e) {
-        $photoBase64 = null;
-    }
-
-    $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem', 'photoBase64'))
+    $pdf = Pdf::loadView('claims.pdf_single', compact('claim', 'originalItem'))
         ->setPaper('a4', 'portrait');
 
     return $pdf->stream('Laporan-Klaim-' . $claim->id . '.pdf');
-    }
-}
+}}
