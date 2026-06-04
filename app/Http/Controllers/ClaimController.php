@@ -488,4 +488,4 @@ class ClaimController extends Controller
 
         return $lostQuery->first();
     }
-}
+} 
